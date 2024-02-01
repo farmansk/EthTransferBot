@@ -3,9 +3,10 @@ const EthereumTx = require('ethereumjs-tx').Transaction;
 const common = require('ethereumjs-common');
 const axios = require('axios');
 const { default: Common } = require("ethereumjs-common");
-const webSocket = 'wss://mainnet.infura.io/ws/v3/02dde345528643bcbc4fb7a5e56a44d4'
+const { Chain } = require("@ethereumjs/common");
+const webSocket = 'wss://goerli.infura.io/ws/v3/02dde345528643bcbc4fb7a5e56a44d4'
 const ethNetwork = 'https://data-seed-prebsc-1-s1.binance.org:8545/';
-const http = 'https://mainnet.infura.io/v3/02dde345528643bcbc4fb7a5e56a44d4'
+const http = 'https://goerli.infura.io/v3/02dde345528643bcbc4fb7a5e56a44d4'
 const web3 = new Web3(new Web3.providers.WebsocketProvider(webSocket));
 const webnode = new Web3(new Web3.providers.HttpProvider(http));
 
@@ -17,6 +18,7 @@ const receiverAddress = '0xd55d54f1a1a7C6E7b1AC25aC20c237B8feeF1B5b'
 async function transferFund(sendersData, recieverData, amountToSend, gas) {
   return new Promise(async (resolve, reject) => {
     var nonce = await webnode.eth.getTransactionCount(sendersData.address);
+    console.log(nonce)
     let gasPrices = await getCurrentGasPrices();
     let details = {
       "to": recieverData.address,
@@ -25,18 +27,20 @@ async function transferFund(sendersData, recieverData, amountToSend, gas) {
       "gasPrice": gasPrices.low * 1000000000,
       "nonce": nonce,
       //change to mainet later
-      "chainId": 1// EIP 155 chainId - mainnet: 1, rinkeby: 4
+      // EIP 155 chainId - mainnet: 1, rinkeby: 4
+      "chainId": 5
     };
-    const binanceChain = common.default.forCustomChain(
-      'mainnet', {
-      name: 'bnb',
-      networkId: 56,
-      chainId: 56
-    },
-      'petersburg'
-    )
-    const ethChain = new Common({ chain: "mainnet" })
 
+    // const binanceChain = common.default.forCustomChain(
+    //   'mainnet', {
+    //   name: 'bnb',
+    //   networkId: 56,
+    //   chainId: 56
+    // },
+    //   'petersburg'
+    // )
+    
+    const ethChain = new Common(Chain.Goerli  ,  'byzantium')
     const transaction = new EthereumTx(details, { 'common': ethChain });
     let privateKey = sendersData.privateKey
     let privKey = Buffer.from(privateKey, 'hex')
@@ -46,8 +50,8 @@ async function transferFund(sendersData, recieverData, amountToSend, gas) {
 
     webnode.eth.sendSignedTransaction('0x' + serializedTransaction.toString('hex'), (err, id) => {
       if (err) {
-
-        return resolve()
+        console.log(err)
+        return resolve(err)
       }
       const url = `${id}`;
       console.log(url);
@@ -124,6 +128,7 @@ function getTrans(trans) {
   })
 
 }
+
 async function initiateTransaction(balance) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -142,6 +147,7 @@ async function initiateTransaction(balance) {
 
   })
 }
+
 async function confirmEtherTransaction(trnasactionData) {
   const trxConfirmations = await getConfirmations(trnasactionData.hash)
 
@@ -185,4 +191,7 @@ async function getConfirmations(txHash) {
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-listenWallet()
+// listenWallet()
+
+
+// 93303012a68bb36d943564f29431deff14ef51afae6139be3fcd74001705addc
